@@ -1,0 +1,18 @@
+# Hostinger Node.js App Configuration
+# This file is for reference - Hostinger Node.js apps use PM2
+
+# If you need to serve static files alongside API:
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  
+  # Don't rewrite API calls
+  RewriteCond %{REQUEST_URI} !^/api
+  
+  # Serve existing files directly
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  
+  # Route everything else to Node.js
+  RewriteRule ^(.*)$ http://localhost:3001/$1 [P]
+</IfModule>

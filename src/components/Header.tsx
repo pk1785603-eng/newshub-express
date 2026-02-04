@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, ChevronDown } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, ChevronDown, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import logo from "@/assets/logo.png";
 import { categories } from "@/data/newsData";
+import { liveApi, LiveSettings } from "@/services/api";
 
 interface HeaderProps {
   isDark: boolean;
@@ -30,7 +31,26 @@ export default function Header({ isDark, toggleTheme }: HeaderProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [liveSettings, setLiveSettings] = useState<LiveSettings | null>(null);
   const location = useLocation();
+
+  useEffect(() => {
+    const fetchLiveStatus = async () => {
+      try {
+        const data = await liveApi.getSettings();
+        setLiveSettings(data);
+      } catch {
+        // Demo mode - check localStorage
+        const stored = localStorage.getItem('live_settings');
+        if (stored) {
+          setLiveSettings(JSON.parse(stored));
+        }
+      }
+    };
+    fetchLiveStatus();
+    const interval = setInterval(fetchLiveStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -135,13 +155,19 @@ export default function Header({ isDark, toggleTheme }: HeaderProps) {
             <Link
               key={item.name}
               to={item.path}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                 isActive(item.path)
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-muted"
               }`}
             >
               {item.name}
+              {item.path === '/live-stream' && liveSettings?.is_live && (
+                <span className="flex items-center gap-1 px-1.5 py-0.5 bg-red-500 text-white text-xs rounded-full animate-pulse">
+                  <Radio className="h-3 w-3" />
+                  LIVE
+                </span>
+              )}
             </Link>
           ))}
         </nav>
